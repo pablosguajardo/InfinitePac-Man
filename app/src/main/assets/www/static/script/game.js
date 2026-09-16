@@ -315,7 +315,13 @@ function Game(id,params){
                 if(_events[eventType][key]){
                     _events[eventType][key](e);
                 }
-                e.preventDefault();
+                // Solo prevenir el comportamiento por defecto para las teclas del juego
+                // (flechas: 37-40, espacio: 32, enter: 13)
+                // Así no se bloquea F12, F5, Ctrl+Shift+I, etc.
+                var gameKeys = [13, 32, 37, 38, 39, 40];
+                if(gameKeys.indexOf(e.keyCode) !== -1){
+                    e.preventDefault();
+                }
             });
         }
         _events[eventType]['s'+this.index] = callback.bind(this);	//绑定事件作用域
