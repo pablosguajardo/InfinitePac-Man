@@ -40,7 +40,9 @@ function Game(id,params){
     var _ = this;
     var settings = {
         width:960,						//画布宽度
-        height:640						//画布高度
+        height:640,						//画布高度
+        viewportY:0,					//PSG: desplazamiento Y del viewport (scroll vertical)
+        mapHeight:0					//PSG: altura total del mapa combinado (para wrap-around)
     };
     Object.assign(_,settings,params);
     var $canvas = document.getElementById(id);
@@ -360,8 +362,25 @@ function Game(id,params){
                             _context.putImageData(map.imageData,0,0);
                         }
                     }else{
-                    	map.update();
+                        map.update();
+                        _context.save();
+                        _context.translate(0,-_.viewportY);
                         map.draw(_context);
+                        // PSG: wrap-around — cuando el viewport supera el final del mapa
+                        if(_.mapHeight>0 && _.viewportY+_.height>_.mapHeight){
+                            _context.save();
+                            _context.translate(0,_.mapHeight);
+                            map.draw(_context);
+                            _context.restore();
+                        }
+                        // PSG: wrap-around — cuando el viewport está antes del inicio del mapa
+                        if(_.mapHeight>0 && _.viewportY<0){
+                            _context.save();
+                            _context.translate(0,-_.mapHeight);
+                            map.draw(_context);
+                            _context.restore();
+                        }
+                        _context.restore();
                     }
                 });
                 stage.items.forEach(function(item){
@@ -377,7 +396,29 @@ function Game(id,params){
                         }
                         item.update();
                     }
-                    item.draw(_context);
+                    // PSG: aplicar viewport a items del mundo; los HUD usan noViewport:true
+                    if(!item.noViewport){
+                        _context.save();
+                        _context.translate(0,-_.viewportY);
+                        item.draw(_context);
+                        // PSG: wrap-around para items (bottom)
+                        if(_.mapHeight>0 && _.viewportY+_.height>_.mapHeight){
+                            _context.save();
+                            _context.translate(0,_.mapHeight);
+                            item.draw(_context);
+                            _context.restore();
+                        }
+                        // PSG: wrap-around para items (top)
+                        if(_.mapHeight>0 && _.viewportY<0){
+                            _context.save();
+                            _context.translate(0,-_.mapHeight);
+                            item.draw(_context);
+                            _context.restore();
+                        }
+                        _context.restore();
+                    }else{
+                        item.draw(_context);
+                    }
                 });
             }
             _hander = requestAnimationFrame(fn);
