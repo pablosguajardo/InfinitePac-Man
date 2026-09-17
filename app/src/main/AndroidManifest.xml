@@ -18,8 +18,11 @@
         <!-- AdMob App ID REAL -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-2172238810849340~2387831433" />
+            android:value="ca-app-pub-2172238810849340~1918158229" />
         <!-- AdMob App ID TEST (descommentar para pruebas):
+
+
+
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />

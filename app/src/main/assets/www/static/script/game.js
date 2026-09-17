@@ -363,20 +363,25 @@ function Game(id,params){
                         }
                     }else{
                         map.update();
+                        // PSG: normalizar viewportY para renderizado infinito circular
+                        var _mapH = _.mapHeight;
+                        var _dispY = _mapH > 0
+                            ? (((_.viewportY) % _mapH) + _mapH) % _mapH
+                            : _.viewportY;
                         _context.save();
-                        _context.translate(0,-_.viewportY);
+                        _context.translate(0,-_dispY);
                         map.draw(_context);
-                        // PSG: wrap-around — cuando el viewport supera el final del mapa
-                        if(_.mapHeight>0 && _.viewportY+_.height>_.mapHeight){
+                        // PSG: siempre dibujar copia inferior (wrap bottom→top)
+                        if(_mapH > 0 && _dispY + _.height > _mapH){
                             _context.save();
-                            _context.translate(0,_.mapHeight);
+                            _context.translate(0,_mapH);
                             map.draw(_context);
                             _context.restore();
                         }
-                        // PSG: wrap-around — cuando el viewport está antes del inicio del mapa
-                        if(_.mapHeight>0 && _.viewportY<0){
+                        // PSG: siempre dibujar copia superior (wrap top→bottom)
+                        if(_mapH > 0 && _dispY < _.height){
                             _context.save();
-                            _context.translate(0,-_.mapHeight);
+                            _context.translate(0,-_mapH);
                             map.draw(_context);
                             _context.restore();
                         }
@@ -398,20 +403,24 @@ function Game(id,params){
                     }
                     // PSG: aplicar viewport a items del mundo; los HUD usan noViewport:true
                     if(!item.noViewport){
+                        var _iMapH = _.mapHeight;
+                        var _iDispY = _iMapH > 0
+                            ? (((_.viewportY) % _iMapH) + _iMapH) % _iMapH
+                            : _.viewportY;
                         _context.save();
-                        _context.translate(0,-_.viewportY);
+                        _context.translate(0,-_iDispY);
                         item.draw(_context);
                         // PSG: wrap-around para items (bottom)
-                        if(_.mapHeight>0 && _.viewportY+_.height>_.mapHeight){
+                        if(_iMapH > 0 && _iDispY + _.height > _iMapH){
                             _context.save();
-                            _context.translate(0,_.mapHeight);
+                            _context.translate(0,_iMapH);
                             item.draw(_context);
                             _context.restore();
                         }
                         // PSG: wrap-around para items (top)
-                        if(_.mapHeight>0 && _.viewportY<0){
+                        if(_iMapH > 0 && _iDispY < _.height){
                             _context.save();
-                            _context.translate(0,-_.mapHeight);
+                            _context.translate(0,-_iMapH);
                             item.draw(_context);
                             _context.restore();
                         }

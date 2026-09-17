@@ -47,13 +47,13 @@
     opacity: 0.8;
 }
 .mod-introtion .bd{
-    padding: 15px 20px;
+   /* padding: 15px 20px;*/
     background-color: rgba(0, 0, 0, 0.02);
     border: 1px solid rgba(0, 0, 0, 0.02);
     border-radius: 8px;
 }
 .mod-introtion .bd p{
-    margin-bottom: 12px;
+   /* margin-bottom: 12px;*/
     line-height: 26px;
     text-indent: 2em;
     font-size: 16px;
@@ -117,5 +117,48 @@
     .mod-introtion .bd p{
         line-height: 24px;
         font-size: 15px;
+    }
+}
+
+/* PSG: portrait full-screen — el canvas ocupa toda la pantalla sin chrome */
+@media (orientation: portrait) {
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+        width: 100%;
+        height: 100%;
+    }
+    .wrapper {
+        margin: 0;
+        padding: 0;
+        min-height: 0;
+        background: #000;
+    }
+    header,
+    .mod-panel .ft {
+        display: none;
+    }
+    .container,
+    .mod-panel,
+    .mod-panel .inner,
+    .mod-panel .bd {
+        margin: 0;
+        padding: 0;
+    }
+    .mod-panel {
+        margin-bottom: 0;
+    }
+    .mod-panel canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw !important;
+        height: 100vh !important;
+        border-radius: 0;
+        margin: 0;
+        display: block;
+        touch-action: none;
     }
 }
