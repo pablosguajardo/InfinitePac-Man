@@ -6,6 +6,7 @@
     margin: 0 auto;
     background: #000;
     border-radius: 12px;
+    touch-action: none; /* PSG: evita scroll/zoom del browser al swipear el canvas */
 }
 .mod-panel .info{
     padding: 10px 0;
