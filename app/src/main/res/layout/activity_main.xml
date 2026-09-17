@@ -22,9 +22,10 @@
         android:layout_gravity="center_horizontal"
         android:background="#09180e"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-2172238810849340/4843796350" />
+        ads:adUnitId="ca-app-pub-2172238810849340/4061105833" />
     <!-- Ad Unit ID TEST (descomentar para pruebas):
     ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
+
     -->
 
 </LinearLayout>
