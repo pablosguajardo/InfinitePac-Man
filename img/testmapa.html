@@ -96,7 +96,7 @@
             color: #111;
         }
         .especial-dos {
-            background-color: #f1c40f; /* El número 2: Amarillo */
+            background-color: #faa48f; /* El número 2: Amarillo */
             color: #111;
         }
         
@@ -139,6 +139,10 @@
     box-shadow: 0 0 10px #007acc;
     transform: scale(1.1);
 }
+.especial-tres {
+    background-color: #f1c40f; /* Amarillo */
+    color: #111;
+}
 
     </style>
 </head>
@@ -147,7 +151,9 @@
     <small style="text-align:center; font-size:10px;">Pincel</small>
     <button class="btn-herramienta" id="btnPared" style="background-color: #e74c3c;" onclick="seleccionarHerramienta(1)"></button>
     <button class="btn-herramienta" id="btnCamino" style="background-color: #252526;" onclick="seleccionarHerramienta(0)"></button>
-    
+    <!-- Botón Especial (3) - Amarillo -->
+	<button class="btn-herramienta" id="btnTres" style="background-color: #f1c40f; color: #111; font-weight: bold; font-size: 16px;" onclick="seleccionarHerramienta(3)">3</button>
+
     <!-- NUEVO BOTÓN: Clonar Fila -->
     <small style="text-align:center; font-size:10px; margin-top:10px;">Fila</small>
     <button class="btn-herramienta" id="btnClonar" style="background-color: #34495e; color: white; font-size: 20px;" onclick="seleccionarHerramienta('clonar')">📋</button>
@@ -240,7 +246,7 @@
                     celda.classList.add('celda');
                     celda.innerText = '';//valor;
 
-                    if (valor === 1) {
+                   /* if (valor === 1) {
                         // REGLA INTELIGENTE: Verificar si está completamente rodeado de '1's
                         // Miramos arriba, abajo, izquierda y derecha cuidando no salirnos de los límites
                         const arriba    = r > 0 ? Number(matriz[r-1][c]) : 0;
@@ -259,8 +265,16 @@
                         celda.classList.add('especial-dos');
                     } else {
                         celda.classList.add('camino');
-                    }
-
+                    }*/
+					if (valor === 1) {
+						celda.classList.add('pared-borde');
+					} else if (valor === 2) {
+						celda.classList.add('especial-dos');
+					} else if (valor === 3) {
+						celda.classList.add('especial-tres');
+					} else {
+						celda.classList.add('camino');
+					}
                     contenedorMapa.appendChild(celda);
                 }
             }
@@ -286,14 +300,17 @@
 			herramientaActiva = null;
 			document.getElementById('btnPared').classList.remove('activo');
 			document.getElementById('btnCamino').classList.remove('activo');
+			document.getElementById('btnTres').classList.remove('activo');
 			document.getElementById('btnClonar').classList.remove('activo');
 		} else {
 			herramientaActiva = valor;
 			document.getElementById('btnPared').classList.toggle('activo', valor === 1);
 			document.getElementById('btnCamino').classList.toggle('activo', valor === 0);
+			document.getElementById('btnTres').classList.toggle('activo', valor === 3);
 			document.getElementById('btnClonar').classList.toggle('activo', valor === 'clonar');
 		}
 	}
+
 
 
     // Actualiza el Textarea con el estado actual de la matriz en memoria
@@ -305,22 +322,24 @@
 
     // Acción de pintar una celda específica
     function pintarCelda(r, c, elementoHTML) {
-        if (herramientaActiva === null) return; // Si no hay pincel seleccionado, no hace nada
+		if (herramientaActiva === null) return;
 
-        matrizActual[r][c] = herramientaActiva;
-        
-        // Actualizar visualmente la celda sin repintar todo el mapa
-        elementoHTML.className = 'celda'; // Limpiar clases previas
-        elementoHTML.innerText = herramientaActiva;
-        
-        if (herramientaActiva === 1) {
-            elementoHTML.classList.add('pared-borde');
-        } else {
-            elementoHTML.classList.add('camino');
-        }
+		matrizActual[r][c] = herramientaActiva;
+		
+		elementoHTML.className = 'celda'; 
+		elementoHTML.innerText = herramientaActiva;
+		
+		if (herramientaActiva === 1) {
+			elementoHTML.classList.add('pared-borde');
+		} else if (herramientaActiva === 3) {
+			elementoHTML.classList.add('especial-tres');
+		} else {
+			elementoHTML.classList.add('camino');
+		}
 
-        actualizarTextarea();
-    }
+		actualizarTextarea();
+	}
+
 
     function procesarYDibujar() {
         const inputText = document.getElementById('arrayInput').value;
