@@ -10,9 +10,34 @@
     <link rel="shortcut icon" href="favicon.png">
     <link rel="stylesheet" href="./static/style/common.css">
     <link rel="stylesheet" href="./static/style/index.css">
+    <style>
+        /* PSG: mensaje de rotación para fallback web */
+        #rotate-msg {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            color: #FFE600;
+            font-family: 'PressStart2P', monospace;
+            font-size: 14px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #rotate-msg.visible { display: flex; }
+    </style>
 </head>
 
 <body>
+
+    <!-- PSG: overlay de rotación (fallback web) -->
+    <div id="rotate-msg">
+        <div style="font-size:48px">&#8635;</div>
+        <div>Girá el dispositivo<br>a modo vertical</div>
+    </div>
 
     <div class="bd">
         <canvas id="canvas">NO HTML5</canvas>
@@ -21,6 +46,28 @@
     <script src="./static/script/map.js"></script>
     <script src="./static/script/game.js"></script>
     <script src="./static/script/index.js"></script>
+
+    <script>
+        // PSG: fallback web — si se rota a landscape, mostrar overlay y recargar al volver a portrait
+        (function(){
+            var rotateMsg = document.getElementById('rotate-msg');
+            function checkOrientation(){
+                var isLandscape = window.innerWidth > window.innerHeight;
+                if(isLandscape){
+                    rotateMsg.classList.add('visible');
+                } else {
+                    if(rotateMsg.classList.contains('visible')){
+                        // Volvió a portrait → recargar para reinicializar el juego con las dimensiones correctas
+                        window.location.reload();
+                    }
+                    rotateMsg.classList.remove('visible');
+                }
+            }
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+            checkOrientation();
+        })();
+    </script>
 
 </body>
 

@@ -11,7 +11,7 @@ android {
         applicationId = "ar.com.solucionespsg.InfinitePacMan"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
+        versionCode = 2
         versionName = "0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
