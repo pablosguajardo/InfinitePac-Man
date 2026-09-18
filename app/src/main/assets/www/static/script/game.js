@@ -46,21 +46,9 @@ function Game(id,params){
     };
     Object.assign(_,settings,params);
     var $canvas = document.getElementById(id);
-    // PSG: adaptar canvas al devicePixelRatio pero preferir el tamaño CSS/visible del canvas
-    // (clientWidth/clientHeight) cuando esté disponible — así respetamos el layout CSS
-    // (ej. 100vw/100vh) y evitamos tamaños lógicos erráticos en algunos WebViews.
-    var dpr = window.devicePixelRatio || 1;
-    // usar clientWidth/clientHeight si ya fueron calculados por el layout; si no, caer a _.width/_.height
-    var cssWidth  = ($canvas && $canvas.clientWidth)  ? $canvas.clientWidth  : _.width;
-    var cssHeight = ($canvas && $canvas.clientHeight) ? $canvas.clientHeight : _.height;
-    // aplicar CSS logical size (en px lógicos)
-    $canvas.style.width  = cssWidth + 'px';
-    $canvas.style.height = cssHeight + 'px';
-    // asignar tamaño real en píxeles físicos y escalar el contexto
-    $canvas.width  = Math.round(cssWidth * dpr);
-    $canvas.height = Math.round(cssHeight * dpr);
+    $canvas.width = _.width;
+    $canvas.height = _.height;
     var _context = $canvas.getContext('2d');	//画布上下文环境
-    _context.scale(dpr, dpr);
     var _stages = [];							//布景对象队列
     var _events = {};							//事件集合
     var _index=0,								//当前布景索引
@@ -365,12 +353,10 @@ function Game(id,params){
                         map.times = f/map.frames;		//计数器
                     }
                     if(map.cache){
-                            if(!map.imageData){
+                        if(!map.imageData){
                             _context.save();
                             map.draw(_context);
-                            // Guardar imageData en píxeles físicos (considerando dpr). Usar las dimensiones
-                            // reales del canvas para evitar desajustes si cssWidth/_.width difieren.
-                            map.imageData = _context.getImageData(0, 0, $canvas.width, $canvas.height);
+                            map.imageData = _context.getImageData(0,0,_.width,_.height);
                             _context.restore();
                         }else{
                             _context.putImageData(map.imageData,0,0);
