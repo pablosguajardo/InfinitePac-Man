@@ -33,14 +33,10 @@
 
 <body>
 
-    <!-- PSG: overlay de rotación (fallback web) -->
-    <div id="rotate-msg">
-        <div style="font-size:48px">&#8635;</div>
-        <div>Girá el dispositivo<br>a modo vertical</div>
-    </div>
-
+  
     <div class="bd">
-        <canvas id="canvas">NO HTML5</canvas>
+        <!-- PSG: asegurar que el canvas ocupe todo el viewport lógico en portrait -->
+        <canvas id="canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;">NO HTML5</canvas>
     </div>
 
     <script src="./static/script/map.js"></script>
@@ -52,8 +48,8 @@
         (function(){
             var rotateMsg = document.getElementById('rotate-msg');
             function checkOrientation(){
-                var isLandscape = window.innerWidth > window.innerHeight;
-                if(isLandscape){
+                //var isLandscape = window.innerWidth > window.innerHeight;
+               /* if(isLandscape){
                     rotateMsg.classList.add('visible');
                 } else {
                     if(rotateMsg.classList.contains('visible')){
@@ -61,7 +57,8 @@
                         window.location.reload();
                     }
                     rotateMsg.classList.remove('visible');
-                }
+                }*/
+               //window.location.reload();
             }
             window.addEventListener('resize', checkOrientation);
             window.addEventListener('orientationchange', checkOrientation);
