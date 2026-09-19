@@ -1,0 +1,4 @@
+.fade-out-element {
+  transition: opacity 300ms ease;
+  opacity: 0;
+}

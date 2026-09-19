@@ -8,8 +8,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Infinite Pac-Man</title>
     <link rel="shortcut icon" href="favicon.png">
-    <link rel="stylesheet" href="./static/style/common.css">
-    <link rel="stylesheet" href="./static/style/index.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/joy.css">
 </head>
 
 <body>
@@ -18,13 +19,24 @@
         <canvas id="canvas">NO HTML5</canvas>
     </div>
 
-    <script src="./static/script/map.js"></script>
-    <script src="./static/script/game.js"></script>
-    <script src="./static/script/index.js"></script>
-
+    <div id="padcontainer" style="width: 256px; position: absolute; left: 24px; top: 24px; display:nonex;z-index:99999;">
+        <img src="img/joy-base.png" style="opacity: 0.1;"/>
+        <div id="stick1" style="position: absolute; left:64px; top:64px;">
+            <img src="img/joy-point.png" style="opacity: 0.2;"/>		
+            <!-- Demo hand indicator -->
+            <div id="demoHand" style="display:none; position:absolute; left:32px; top:32px; font-size:48px; z-index:100000; pointer-events:none; transition: transform 0.6s ease-in-out;">👆</div>
+        </div>
+    </div>
+    <script src="js/map.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/joy.js"></script>
+    
     <script>
         // PSG: fallback web — si se rota a landscape, mostrar overlay y recargar al volver a portrait
         (function(){
+            initJoy(true);//true es por defecto abajo 
+            //updateJoystick();
             var rotateMsg = document.getElementById('rotate-msg');
             function checkOrientation(){
               /*  var isLandscape = window.innerWidth > window.innerHeight;
