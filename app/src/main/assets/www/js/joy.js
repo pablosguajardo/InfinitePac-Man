@@ -1,10 +1,11 @@
 
 var FirstStart = 0;
 
-var derAPRETADO = 0;
-var izqAPRETADO = 0;
-var subeAPRETADO = 0;
-var subeAPRETADOMan = 0;
+var rightPress = 0;
+var leftPress = 0;
+var upPress = 0;
+var downPress = 0;
+var upPressMan = 0;
 var CantDisp = 0;
 var BigAlienApear = 0;
 var levelAct = 1;
@@ -38,6 +39,9 @@ var OptionsArr = new Array();
 var HEIGHT = 0;
 var WIDTH = 0;
 var padcontainer;
+var jup, jdown, jleft, jright, jred;
+var percentageThreshold = 0.20;//12
+var percentajeOut = 0.10;
 
 class JoystickController {
     // stickID: ID of HTML element (representing joystick) that will be dragged
@@ -144,19 +148,59 @@ class JoystickController {
 let joystick1 = new JoystickController("stick1", 64, 8);
 
 function initJoy(notop) {
+    jup = document.getElementById('jup');
+    jdown = document.getElementById('jdown');
+    jleft = document.getElementById('jleft');
+    jright = document.getElementById('jright');
+    jred = document.getElementById('jred');
+
     WIDTH = GAME_W;
     HEIGHT = GAME_H;
     load_Option(notop);
     padcontainer = document.getElementById('padcontainer');
-    console.log("3 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
+    //console.log("3 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
     padcontainer.style.left = OPTIONSG["leftMovp"] + 'px';
     padcontainer.style.top = OPTIONSG["topMovp"] + 'px';
+    padcontainer.style.display = "block";
     loop();
+
+    const rect = padcontainer.getBoundingClientRect();
+    padcontainer.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        // Calculamos el x% del ancho y alto como margen de anticipación
+        const marginX = rect.width * percentajeOut;
+        const marginY = rect.height * percentajeOut;
+
+        // Creamos un límite interno (un 10% más pequeño en cada borde)
+        const limitLeft = rect.left + marginX;
+        const limitRight = rect.right - marginX;
+        const limitTop = rect.top + marginY;
+        const limitBottom = rect.bottom - marginY;
+
+        // Verificamos si el dedo cruzó este límite interno anticipado
+        const isOutside = (
+            touch.clientX < limitLeft ||
+            touch.clientX > limitRight ||
+            touch.clientY < limitTop ||
+            touch.clientY > limitBottom
+        );
+
+        if (isOutside) {
+            //console.log("¡El dedo salió de los límites!");
+            // Aquí ejecutas tu lógica de salida
+            jred.style.display = "block";
+        } else {
+            jred.style.display = "none";
+
+        }
+    });
 }
 function loop() {
     requestAnimationFrame(loop);
     updateJoystick();
 }
+
+
 
 function updateJoystick() {
     //document.getElementById("status1").innerText = "Joystick 1: " + JSON.stringify(joystick1.value);
@@ -164,26 +208,53 @@ function updateJoystick() {
 
 
     ActSpeedShip = joystick1.value.x;
-    if (joystick1.value.x > 0.1) {
-        derAPRETADO = 1;
-        izqAPRETADO = 0;
+    if (joystick1.value.x > percentageThreshold) {
+        rightPress = 1;
+        leftPress = 0;
         leftDown = false;
         rightDown = true;
         //if(vibrateOff==0){navigator.vibrate(80);}
+        jleft.style.display = "none";
+        jright.style.display = "block";
 
-    } else if (joystick1.value.x < -0.1) {
-        izqAPRETADO = 1;
-        derAPRETADO = 0;
+    } else if (joystick1.value.x < (percentageThreshold * -1)) {
+        leftPress = 1;
+        rightPress = 0;
         leftDown = true;
         rightDown = false;
+        jleft.style.display = "block";
+        jright.style.display = "none";
 
         //if(vibrateOff==0){navigator.vibrate(80);}
     } else {
-        derAPRETADO = 0;
-        izqAPRETADO = 0;
+        rightPress = 0;
+        leftPress = 0;
         leftDown = false;
         rightDown = false;
+        jleft.style.display = "none";
+        jright.style.display = "none";
     }
+
+    //up-Dpwn
+
+    if (joystick1.value.y > percentageThreshold) {
+        upPress = 0;
+        downPress = 1;
+        jup.style.display = "none";
+        jdown.style.display = "block";
+    } else if (joystick1.value.y < (percentageThreshold * -1)) {
+        upPress = 1;
+        downPress = 0;
+        jup.style.display = "block";
+        jdown.style.display = "none";
+    } else {
+        upPress = 0;
+        downPress = 0;
+        jup.style.display = "none";
+        jdown.style.display = "none";
+    }
+    //console.log('x: ' + joystick1.value.x + ' y: ' + joystick1.value.y);
+
     if (FirstStart == 0 && editJoyOff == 0) {
 
         //console.log('x: ' + joystick1.value.x + ' y: ' + joystick1.value.y);
@@ -194,7 +265,7 @@ function updateJoystick() {
             mov1 = joystick1.value.x;
             leftMovp = padcontainer.getBoundingClientRect().left;
             //$('#padcontainer').position().left;
-            console.log("leftMovp: " + leftMovp);
+            //console.log("leftMovp: " + leftMovp);
             if (leftMovp < (WIDTH - 256)) {
                 leftMovp = leftMovp + mov1;
                 //$('#padcontainer').css("left", leftMovp);
@@ -270,14 +341,14 @@ function load_Option(notop) {
         }
         //alert(generate_highOptions());
     }
-    console.log("1 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
+    //console.log("1 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
     // Valores por defecto si no existen en el storage
     if (OPTIONSG["leftMovp"] == null || OPTIONSG["leftMovp"] == undefined || isNaN(Number(OPTIONSG["leftMovp"]))) {
         OPTIONSG["leftMovp"] = 24;
         if (typeof isFirstTime !== "undefined") { isFirstTime = true; }
     }
     if (OPTIONSG["topMovp"] == null || OPTIONSG["topMovp"] == undefined || isNaN(Number(OPTIONSG["topMovp"]))) {
-        console.log("notop:" + notop);
+        //console.log("notop:" + notop);
         if (notop == true) {
             OPTIONSG["topMovp"] = HEIGHT - (256 + 24);//256 ocupa el joypad + 24.
         } else {
@@ -285,7 +356,7 @@ function load_Option(notop) {
         }
     }
 
-    console.log("2 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
+    //console.log("2 left: " + OPTIONSG["leftMovp"] + "top: " + OPTIONSG["topMovp"]);
 }
 
 

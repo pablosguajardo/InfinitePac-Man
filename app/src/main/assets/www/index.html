@@ -19,8 +19,13 @@
         <canvas id="canvas">NO HTML5</canvas>
     </div>
 
-    <div id="padcontainer" style="width: 256px; position: absolute; left: 24px; top: 24px; display:nonex;z-index:99999;">
+    <div id="padcontainer" style="width: 256px; position: absolute; left: 24px; top: 24px; display:none;z-index:99999;">
         <img src="img/joy-base.png" style="opacity: 0.1;"/>
+        <img id="jup" src="img/jup.png" style="position: absolute;top: 0;left: 0;display: none;opacity: 0.4;">
+        <img id="jdown" src="img/jdown.png" style="position: absolute;top: 0;left: 0;display: none;opacity: 0.4;">
+        <img id="jleft" src="img/jleft.png" style="position: absolute;top: 0;left: 0;display: none;opacity: 0.4;">
+        <img id="jright" src="img/jright.png" style="position: absolute;top: 0;left: 0;display: none;opacity: 0.4;">
+        <img id="jred" src="img/red.png" style="position: absolute;top: 0;left: 0;display: none;opacity: 0.4;">
         <div id="stick1" style="position: absolute; left:64px; top:64px;">
             <img src="img/joy-point.png" style="opacity: 0.2;"/>		
             <!-- Demo hand indicator -->
@@ -33,26 +38,8 @@
     <script src="js/joy.js"></script>
     
     <script>
-        // PSG: fallback web — si se rota a landscape, mostrar overlay y recargar al volver a portrait
         (function(){
             initJoy(true);//true es por defecto abajo 
-            //updateJoystick();
-            var rotateMsg = document.getElementById('rotate-msg');
-            function checkOrientation(){
-              /*  var isLandscape = window.innerWidth > window.innerHeight;
-                if(isLandscape){
-                    rotateMsg.classList.add('visible');
-                } else {
-                    if(rotateMsg.classList.contains('visible')){
-                        // Volvió a portrait → recargar para reinicializar el juego con las dimensiones correctas
-                        window.location.reload();
-                    }
-                    rotateMsg.classList.remove('visible');
-                }*/
-            }
-            window.addEventListener('resize', checkOrientation);
-            window.addEventListener('orientationchange', checkOrientation);
-            checkOrientation();
         })();
     </script>
 
