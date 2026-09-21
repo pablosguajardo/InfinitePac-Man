@@ -483,6 +483,17 @@ function Game(id,params){
         _index = index;
         _stages[_index].status = 1;
         _stages[_index].reset(); //重置
+
+        // Si es el stage final (pantalla de Game Over), forzar que sus items se rendericen
+        // sin verse afectados por la viewport (se muestran siempre en pantalla).
+        try {
+            if (_index === _stages.length - 1) {
+                _stages[_index].items.forEach(function(it){
+                    it.noViewport = true;
+                });
+            }
+        } catch(e) { /* noop */ }
+
         return _stages[_index];
     };
     //下个布景
