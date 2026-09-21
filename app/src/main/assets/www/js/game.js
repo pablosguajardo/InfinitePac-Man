@@ -160,13 +160,24 @@ function Game(id,params){
             type:'path'
         };
         var options = Object.assign({},defaults,params);
+        var y_length  = options.map.length;
+        var x_length = options.map[0].length;
+        // PSG: normalizar coordenadas fuera de rango (filas virtuales tras wrap circular)
+        options.start = {
+            x: ((Math.floor(options.start.x) % x_length) + x_length) % x_length,
+            y: ((Math.floor(options.start.y) % y_length) + y_length) % y_length,
+            change: options.start.change
+        };
+        options.end = {
+            x: ((Math.floor(options.end.x) % x_length) + x_length) % x_length,
+            y: ((Math.floor(options.end.y) % y_length) + y_length) % y_length,
+            change: options.end.change
+        };
         if(options.map[options.start.y][options.start.x]||options.map[options.end.y][options.end.x]){ //当起点或终点设置在墙上
             return [];
         }
         var finded = false;
         var result = [];
-        var y_length  = options.map.length;
-        var x_length = options.map[0].length;
         var steps = Array(y_length).fill(0).map(()=>Array(x_length).fill(0));     //步骤的映射
         var _getValue = function(x,y){  //获取地图上的值
             if(options.map[y]&&typeof options.map[y][x]!='undefined'){
@@ -348,9 +359,41 @@ function Game(id,params){
                 stage.timeout--;
             }
             if(stage.update()!=false){		            //update返回false,则不绘制
+                // PSG FIX: two-pass render para evitar desync de viewport en el frame de wrap.
+                // Problema original: maps renderizaban con viewportY del frame anterior, luego
+                // player.update() cambiaba viewportY mid-frame (al ejecutar el wrap vertical),
+                // y el player renderizaba con el nuevo viewportY → salto visual de 1 tile.
+                // Solución: separar en 3 pasadas:
+                //   1) Actualizar TODOS los items (player.update() actualiza game.viewportY)
+                //   2) Calcular _sharedDispY UNA SOLA VEZ con el viewportY ya actualizado
+                //   3) Renderizar mapas e items con el mismo _sharedDispY compartido
+
+                // === PASADA 1: actualizar todos los items ===
+                stage.items.forEach(function(item){
+                    if(!(f%item.frames)){
+                        item.times = f/item.frames;        //计数器
+                    }
+                    if(stage.status==1&&item.status!=2){   //对象及布景状态都不处于暂停状态
+                        if(item.location){
+                            item.coord = item.location.position2coord(item.x,item.y);
+                        }
+                        if(item.timeout){
+                            item.timeout--;
+                        }
+                        item.update();
+                    }
+                });
+
+                // === Snapshot de viewport DESPUES de todos los updates ===
+                var _sharedMapH = _.mapHeight;
+                var _sharedDispY = _sharedMapH > 0
+                    ? (((_.viewportY) % _sharedMapH) + _sharedMapH) % _sharedMapH
+                    : _.viewportY;
+
+                // === PASADA 2: renderizar mapas con _sharedDispY ===
                 stage.maps.forEach(function(map){
                     if(!(f%map.frames)){
-                        map.times = f/map.frames;		//计数器
+                        map.times = f/map.frames;          //计数器
                     }
                     if(map.cache){
                         if(!map.imageData){
@@ -363,64 +406,45 @@ function Game(id,params){
                         }
                     }else{
                         map.update();
-                        // PSG: normalizar viewportY para renderizado infinito circular
-                        var _mapH = _.mapHeight;
-                        var _dispY = _mapH > 0
-                            ? (((_.viewportY) % _mapH) + _mapH) % _mapH
-                            : _.viewportY;
                         _context.save();
-                        _context.translate(0,-_dispY);
+                        _context.translate(0,-_sharedDispY);
                         map.draw(_context);
                         // PSG: siempre dibujar copia inferior (wrap bottom→top)
-                        if(_mapH > 0 && _dispY + _.height > _mapH){
+                        if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
                             _context.save();
-                            _context.translate(0,_mapH);
+                            _context.translate(0,_sharedMapH);
                             map.draw(_context);
                             _context.restore();
                         }
                         // PSG: siempre dibujar copia superior (wrap top→bottom)
-                        if(_mapH > 0 && _dispY < _.height){
+                        if(_sharedMapH > 0 && _sharedDispY < _.height){
                             _context.save();
-                            _context.translate(0,-_mapH);
+                            _context.translate(0,-_sharedMapH);
                             map.draw(_context);
                             _context.restore();
                         }
                         _context.restore();
                     }
                 });
+
+                // === PASADA 3: renderizar items con el mismo _sharedDispY ===
                 stage.items.forEach(function(item){
-                    if(!(f%item.frames)){
-                        item.times = f/item.frames;		   //计数器
-                    }
-                    if(stage.status==1&&item.status!=2){  	//对象及布景状态都不处于暂停状态
-                        if(item.location){
-                            item.coord = item.location.position2coord(item.x,item.y);
-                        }
-                        if(item.timeout){
-                            item.timeout--;
-                        }
-                        item.update();
-                    }
                     // PSG: aplicar viewport a items del mundo; los HUD usan noViewport:true
                     if(!item.noViewport){
-                        var _iMapH = _.mapHeight;
-                        var _iDispY = _iMapH > 0
-                            ? (((_.viewportY) % _iMapH) + _iMapH) % _iMapH
-                            : _.viewportY;
                         _context.save();
-                        _context.translate(0,-_iDispY);
+                        _context.translate(0,-_sharedDispY);
                         item.draw(_context);
                         // PSG: wrap-around para items (bottom)
-                        if(_iMapH > 0 && _iDispY + _.height > _iMapH){
+                        if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
                             _context.save();
-                            _context.translate(0,_iMapH);
+                            _context.translate(0,_sharedMapH);
                             item.draw(_context);
                             _context.restore();
                         }
                         // PSG: wrap-around para items (top)
-                        if(_iMapH > 0 && _iDispY < _.height){
+                        if(_sharedMapH > 0 && _sharedDispY < _.height){
                             _context.save();
-                            _context.translate(0,-_iMapH);
+                            _context.translate(0,-_sharedMapH);
                             item.draw(_context);
                             _context.restore();
                         }
