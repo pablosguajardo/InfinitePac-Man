@@ -451,22 +451,38 @@ function Game(id,params){
                         _context.save();
                         _context.translate(0,-_sharedDispY);
                         var __map_draw_t0 = Date.now();
+                        try {
+                            // Debug: mostrar qué función se está invocando como map.draw en tiempo de ejecución
+                            console.log('MAP_CALL MAIN', {
+                                mapId: map._id,
+                                hasTiles: !!map._tiles,
+                                tilesLength: map._tiles ? map._tiles.length : 0,
+                                drawEqualsOrig: (typeof map._origDraw === 'function') ? (map._origDraw === map.draw) : 'no _origDraw',
+                                drawType: typeof map.draw
+                            });
+                        } catch (e) { /* noop */ }
                         map.draw(_context);
                         perfAdd && perfAdd('map.draw', Date.now()-__map_draw_t0);
                         // PSG: siempre dibujar copia inferior (wrap bottom→top)
-                        if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
-                            _context.save();
-                            _context.translate(0,_sharedMapH);
-                            map.draw(_context);
-                            _context.restore();
-                        }
+                            if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
+                                _context.save();
+                                _context.translate(0,_sharedMapH);
+                                try {
+                                    console.log('MAP_CALL BOTTOM_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
+                                } catch (e) { /* noop */ }
+                                map.draw(_context);
+                                _context.restore();
+                            }
                         // PSG: siempre dibujar copia superior (wrap top→bottom)
-                        if(_sharedMapH > 0 && _sharedDispY < _.height){
-                            _context.save();
-                            _context.translate(0,-_sharedMapH);
-                            map.draw(_context);
-                            _context.restore();
-                        }
+                            if(_sharedMapH > 0 && _sharedDispY < _.height){
+                                _context.save();
+                                _context.translate(0,-_sharedMapH);
+                                try {
+                                    console.log('MAP_CALL TOP_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
+                                } catch (e) { /* noop */ }
+                                map.draw(_context);
+                                _context.restore();
+                            }
                         _context.restore();
                     }
                 });
