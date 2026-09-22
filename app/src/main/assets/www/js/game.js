@@ -351,7 +351,7 @@ function Game(id,params){
             var now = (new Date()).getTime();
             var delta = now - last;
             // Evitar acumulación gigante tras pausas largas (clamp)
-            if (delta > 1000*2) delta = STEP;
+            if (delta > 1000) delta = STEP;
             last = now;
             accumulator += delta;
 
