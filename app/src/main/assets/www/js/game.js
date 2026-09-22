@@ -36,6 +36,34 @@ Date.now = function() { return new Date().getTime(); };
     }
 }());
 
+/* Performance instrumentation helper (defined early so calls like `perfAdd && perfAdd(...)`
+   won't throw ReferenceError when the code runs). Keeps lightweight state on window.__perf
+   and logs aggregated averages approximately every 1s. */
+if (!window.__perf) window.__perf = { data: {}, lastLog: Date.now() };
+if (typeof window.perfAdd !== 'function') {
+    window.perfAdd = function(name, ms) {
+        try {
+            var p = window.__perf;
+            var d = p.data[name] || { total: 0, count: 0 };
+            d.total += ms;
+            d.count += 1;
+            p.data[name] = d;
+            var now = Date.now();
+            if (now - p.lastLog > 1000) {
+                var parts = [];
+                for (var k in p.data) {
+                    if (Object.prototype.hasOwnProperty.call(p.data, k)) {
+                        var entry = p.data[k];
+                        parts.push(k + '=' + Math.round(entry.total / Math.max(1, entry.count)) + 'ms avg(' + entry.count + ')');
+                    }
+                }
+                try { console.log('PERF', parts.join(' | ')); } catch (e) { /* noop */ }
+                p.data = {};
+                p.lastLog = now;
+            }
+        } catch (e) { /* noop */ }
+    };
+}
 function Game(id,params){
     var _ = this;
     var settings = {
@@ -153,6 +181,7 @@ function Game(id,params){
     };
     //寻址算法
     Map.prototype.finder = function(params){
+        var _finder_t0 = Date.now();
         var defaults = {
             map:null,
             start:{},
@@ -242,6 +271,7 @@ function Game(id,params){
                 _next({x:current.x,y:current.y-1});
             }
         }
+        perfAdd && perfAdd('finder', Date.now()-_finder_t0);
         return result;
     };
     //布景对象构造器
@@ -369,6 +399,7 @@ function Game(id,params){
                     stage.timeout--;
                 }
                 // Actualizar todos los items (misma lógica que antes en PASADA 1)
+                var __items_t0 = Date.now();
                 stage.items.forEach(function(item){
                     if(!(f%item.frames)){
                         item.times = f/item.frames;
@@ -383,6 +414,7 @@ function Game(id,params){
                         item.update();
                     }
                 });
+                perfAdd && perfAdd('items.update', Date.now()-__items_t0);
                 accumulator -= STEP;
                 steps++;
             }
@@ -418,7 +450,9 @@ function Game(id,params){
                         map.update();
                         _context.save();
                         _context.translate(0,-_sharedDispY);
+                        var __map_draw_t0 = Date.now();
                         map.draw(_context);
+                        perfAdd && perfAdd('map.draw', Date.now()-__map_draw_t0);
                         // PSG: siempre dibujar copia inferior (wrap bottom→top)
                         if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
                             _context.save();
@@ -440,10 +474,12 @@ function Game(id,params){
                 // === PASADA 3: renderizar items con el mismo _sharedDispY ===
                 stage.items.forEach(function(item){
                     // PSG: aplicar viewport a items del mundo; los HUD usan noViewport:true
-                    if(!item.noViewport){
+                        if(!item.noViewport){
                         _context.save();
                         _context.translate(0,-_sharedDispY);
+                        var __item_draw_t0 = Date.now();
                         item.draw(_context);
+                        perfAdd && perfAdd('item.draw', Date.now()-__item_draw_t0);
                         // PSG: wrap-around para items (bottom)
                         if(_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH){
                             _context.save();
@@ -460,7 +496,9 @@ function Game(id,params){
                         }
                         _context.restore();
                     }else{
+                        var __item_draw_t0 = Date.now();
                         item.draw(_context);
+                        perfAdd && perfAdd('item.draw', Date.now()-__item_draw_t0);
                     }
                 });
             }

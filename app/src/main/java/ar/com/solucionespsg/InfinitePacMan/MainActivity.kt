@@ -7,6 +7,9 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.util.Log
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -35,6 +38,10 @@ class MainActivity : ComponentActivity() {
 
         // Configurar WebView
         webView = findViewById(R.id.webView)
+
+        // Habilitar debugging de WebView para poder inspeccionar con chrome://inspect (útil en desarrollo)
+        WebView.setWebContentsDebuggingEnabled(true)
+
         webView.apply {
             settings.apply {
                 javaScriptEnabled = true
@@ -53,6 +60,23 @@ class MainActivity : ComponentActivity() {
                 loadWithOverviewMode = true
                 useWideViewPort = true
             }
+
+            // Redirigir console.log() del WebView hacia Logcat
+            webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                    try {
+                        val msg = consoleMessage?.message() ?: return false
+                        val src = consoleMessage?.sourceId() ?: ""
+                        val line = consoleMessage?.lineNumber() ?: 0
+                        // Etiqueta clara para filtrar en logcat
+                        Log.d("WebViewConsole", "[$src:$line] $msg")
+                    } catch (e: Exception) {
+                        Log.w("WebViewConsole", "failed to log console message", e)
+                    }
+                    return true
+                }
+            }
+
             webViewClient = WebViewClient()
             setBackgroundColor(Color.parseColor("#09180e"))
             loadUrl("file:///android_asset/www/index.html")
