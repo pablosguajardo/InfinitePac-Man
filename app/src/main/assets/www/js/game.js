@@ -339,41 +339,41 @@ function Game(id,params){
         }
         _events[eventType]['s'+this.index] = callback.bind(this);	//绑定事件作用域
     };
-    //动画开始
+    //La animación comienza (fixed timestep)
     this.start = function() {
-        var f = 0;		//帧数计算
-        var timestamp = (new Date()).getTime();
+        var f = 0; // Contador de ticks (se incrementa por cada paso fijo)
+        var STEP = 1000 / 60; // ms por tick de actualización (60 Hz lógico)
+        var last = (new Date()).getTime();
+        var accumulator = 0;
         var fn = function(){
+            // Mantener requestAnimationFrame para renderizar a la tasa del dispositivo
+            _hander = requestAnimationFrame(fn);
             var now = (new Date()).getTime();
-            if(now-timestamp<16){   // 限频，防止高刷屏幕动画过快
-                _hander = requestAnimationFrame(fn);
-                return false;
-            }
-            timestamp = now;
-            var stage = _stages[_index];
-            _context.clearRect(0,0,_.width,_.height);		//清除画布
-            _context.fillStyle = '#000000';
-            _context.fillRect(0,0,_.width,_.height);
-            f++;
-            if(stage.timeout){
-                stage.timeout--;
-            }
-            if(stage.update()!=false){		            //update返回false,则不绘制
-                // PSG FIX: two-pass render para evitar desync de viewport en el frame de wrap.
-                // Problema original: maps renderizaban con viewportY del frame anterior, luego
-                // player.update() cambiaba viewportY mid-frame (al ejecutar el wrap vertical),
-                // y el player renderizaba con el nuevo viewportY → salto visual de 1 tile.
-                // Solución: separar en 3 pasadas:
-                //   1) Actualizar TODOS los items (player.update() actualiza game.viewportY)
-                //   2) Calcular _sharedDispY UNA SOLA VEZ con el viewportY ya actualizado
-                //   3) Renderizar mapas e items con el mismo _sharedDispY compartido
+            var delta = now - last;
+            // Evitar acumulación gigante tras pausas largas (clamp)
+            if (delta > 1000*2) delta = STEP;
+            last = now;
+            accumulator += delta;
 
-                // === PASADA 1: actualizar todos los items ===
+            var stage = _stages[_index];
+
+            // Ejecutar múltiples pasos de lógica si el dispositivo está atrasado,
+            // o ninguno si está al día. Limitamos el número de pasos por frame
+            // para evitar bucles infinitos en dispositivos extremadamente lentos.
+            var maxSteps = 10;
+            var steps = 0;
+            while (accumulator >= STEP && steps < maxSteps) {
+                // === PASO DE LÓGICA (fixed tick) ===
+                f++;
+                if(stage.timeout){
+                    stage.timeout--;
+                }
+                // Actualizar todos los items (misma lógica que antes en PASADA 1)
                 stage.items.forEach(function(item){
                     if(!(f%item.frames)){
-                        item.times = f/item.frames;        //计数器
+                        item.times = f/item.frames;
                     }
-                    if(stage.status==1&&item.status!=2){   //对象及布景状态都不处于暂停状态
+                    if(stage.status==1&&item.status!=2){
                         if(item.location){
                             item.coord = item.location.position2coord(item.x,item.y);
                         }
@@ -383,8 +383,18 @@ function Game(id,params){
                         item.update();
                     }
                 });
+                accumulator -= STEP;
+                steps++;
+            }
 
-                // === Snapshot de viewport DESPUES de todos los updates ===
+            // Render (se hace siempre a la tasa del display).
+            _context.clearRect(0,0,_.width,_.height);
+            _context.fillStyle = '#000000';
+            _context.fillRect(0,0,_.width,_.height);
+
+            // Mantener la semántica original: permitir que stage.update decida si se dibuja.
+            if(stage.update()!=false){
+                // Snapshot de viewport DESPUES de los updates ya aplicados
                 var _sharedMapH = _.mapHeight;
                 var _sharedDispY = _sharedMapH > 0
                     ? (((_.viewportY) % _sharedMapH) + _sharedMapH) % _sharedMapH
@@ -393,7 +403,7 @@ function Game(id,params){
                 // === PASADA 2: renderizar mapas con _sharedDispY ===
                 stage.maps.forEach(function(map){
                     if(!(f%map.frames)){
-                        map.times = f/map.frames;          //计数器
+                        map.times = f/map.frames;
                     }
                     if(map.cache){
                         if(!map.imageData){
@@ -454,7 +464,6 @@ function Game(id,params){
                     }
                 });
             }
-            _hander = requestAnimationFrame(fn);
         };
         _hander = requestAnimationFrame(fn);
     };
