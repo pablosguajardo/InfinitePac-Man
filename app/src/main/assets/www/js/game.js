@@ -11,6 +11,7 @@
 /*
 * Motor de videojuegos a pequeña escala
 */
+window.GAME_DEBUG = false;
 
 // requestAnimationFrame polyfill
 if (!Date.now)
@@ -453,13 +454,13 @@ function Game(id,params){
                         var __map_draw_t0 = Date.now();
                         try {
                             // Debug: mostrar qué función se está invocando como map.draw en tiempo de ejecución
-                            console.log('MAP_CALL MAIN', {
-                                mapId: map._id,
-                                hasTiles: !!map._tiles,
-                                tilesLength: map._tiles ? map._tiles.length : 0,
-                                drawEqualsOrig: (typeof map._origDraw === 'function') ? (map._origDraw === map.draw) : 'no _origDraw',
-                                drawType: typeof map.draw
-                            });
+                           window.GAME_DEBUG ?? console.log('MAP_CALL MAIN ' + JSON.stringify({
+                                        mapId: map._id,
+                                        hasTiles: !!map._tiles,
+                                        tilesLength: map._tiles ? map._tiles.length : 0,
+                                        drawEqualsOrig: (typeof map._origDraw === 'function') ? (map._origDraw === map.draw) : 'no _origDraw',
+                                        drawType: typeof map.draw
+                                    }, null, 2)); // El 'null, 2' hace que se imprima ordenado con saltos de línea
                         } catch (e) { /* noop */ }
                         map.draw(_context);
                         perfAdd && perfAdd('map.draw', Date.now()-__map_draw_t0);
