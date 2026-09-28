@@ -497,22 +497,37 @@ function Game(id, params) {
                     if (!item.noViewport) {
                         _context.save();
                         _context.translate(0, -_sharedDispY);
-                        var __item_draw_t0 = Date.now();
-                        item.draw(_context);
-                        perfAdd && perfAdd('item.draw', Date.now() - __item_draw_t0);
-                        // PSG: wrap-around para items (bottom)
-                        if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
-                            _context.save();
-                            _context.translate(0, _sharedMapH);
+
+                        // PSG: culling — tamaño del item con margen generoso para sprites recortados
+                        var _iHalf = (item.height || 20);
+                        var _iCanvasY = item.y - _sharedDispY;
+
+                        // Draw principal: solo si el item solapa con [0, height]
+                        if (_iCanvasY + _iHalf >= 0 && _iCanvasY - _iHalf <= _.height) {
+                            var __item_draw_t0 = Date.now();
                             item.draw(_context);
-                            _context.restore();
+                            perfAdd && perfAdd('item.draw', Date.now() - __item_draw_t0);
                         }
-                        // PSG: wrap-around para items (top)
+
+                        // PSG: wrap-around para items (bottom) con culling
+                        if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
+                            var _iWrapBotY = _iCanvasY + _sharedMapH;
+                            if (_iWrapBotY + _iHalf >= 0 && _iWrapBotY - _iHalf <= _.height) {
+                                _context.save();
+                                _context.translate(0, _sharedMapH);
+                                item.draw(_context);
+                                _context.restore();
+                            }
+                        }
+                        // PSG: wrap-around para items (top) con culling
                         if (_sharedMapH > 0 && _sharedDispY < _.height) {
-                            _context.save();
-                            _context.translate(0, -_sharedMapH);
-                            item.draw(_context);
-                            _context.restore();
+                            var _iWrapTopY = _iCanvasY - _sharedMapH;
+                            if (_iWrapTopY + _iHalf >= 0 && _iWrapTopY - _iHalf <= _.height) {
+                                _context.save();
+                                _context.translate(0, -_sharedMapH);
+                                item.draw(_context);
+                                _context.restore();
+                            }
                         }
                         _context.restore();
                     } else {
