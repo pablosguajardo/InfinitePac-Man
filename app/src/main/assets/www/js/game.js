@@ -436,6 +436,7 @@ function Game(id, params) {
                     : _.viewportY;
 
                 // === PASADA 2: renderizar mapas con _sharedDispY ===
+                // UN único bloque save/restore por mapa (drawViewport maneja wraps internamente)
                 stage.maps.forEach(function (map) {
                     if (!(f % map.frames)) {
                         map.times = f / map.frames;
@@ -451,86 +452,82 @@ function Game(id, params) {
                         }
                     } else {
                         map.update();
-                        _context.save();
-                        _context.translate(0, -_sharedDispY);
                         var __map_draw_t0 = Date.now();
-                        try {
-                            // Debug: mostrar qué función se está invocando como map.draw en tiempo de ejecución
-                            window.GAME_DEBUG ?? console.log('MAP_CALL MAIN ' + JSON.stringify({
-                                mapId: map._id,
-                                hasTiles: !!map._tiles,
-                                tilesLength: map._tiles ? map._tiles.length : 0,
-                                drawEqualsOrig: (typeof map._origDraw === 'function') ? (map._origDraw === map.draw) : 'no _origDraw',
-                                drawType: typeof map.draw
-                            }, null, 2)); // El 'null, 2' hace que se imprima ordenado con saltos de línea
-                        } catch (e) { /* noop */ }
-                        map.draw(_context);
-                        perfAdd && perfAdd('map.draw', Date.now() - __map_draw_t0);
-
-                        // PSG: siempre dibujar copia inferior (wrap bottom→top)
-                        if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
+                        if (typeof map.drawViewport === 'function') {
+                            // drawViewport: UNA sola llamada, sin save/translate/restore
+                            map.drawViewport(_context, _sharedDispY, _sharedMapH, _.height);
+                        } else {
+                            // fallback legacy
                             _context.save();
-                            _context.translate(0, _sharedMapH);
-                            try {
-                                window.GAME_DEBUG ?? console.log('MAP_CALL BOTTOM_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
-                            } catch (e) { /* noop */ }
+                            _context.translate(0, -_sharedDispY);
                             map.draw(_context);
+                            if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
+                                _context.save();
+                                _context.translate(0, _sharedMapH);
+                                map.draw(_context);
+                                _context.restore();
+                            }
                             _context.restore();
                         }
-                       /* // PSG: siempre dibujar copia superior (wrap top→bottom)
-                        if (_sharedMapH > 0 && _sharedDispY < _.height) {
-                            _context.save();
-                            _context.translate(0, -_sharedMapH);
-                            try {
-                                window.GAME_DEBUG ?? console.log('MAP_CALL TOP_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
-                            } catch (e) { /* noop * / }
-                            map.draw(_context);
-                            _context.restore();
-                        }*/
-                        _context.restore();
+                        perfAdd && perfAdd('map.draw', Date.now() - __map_draw_t0);
                     }
                 });
 
                 // === PASADA 3: renderizar items con el mismo _sharedDispY ===
-                stage.items.forEach(function (item) {
-                    // PSG: aplicar viewport a items del mundo; los HUD usan noViewport:true
-                    if (!item.noViewport) {
-                        _context.save();
-                        _context.translate(0, -_sharedDispY);
+                // UN solo save/translate para TODOS los items del mundo (en vez de uno por item).
+                // Tres pasadas máximo: normal + wrap-bottom + wrap-top.
 
-                        // PSG: culling — tamaño del item con margen generoso para sprites recortados
+                // -- 3a: items del mundo (pasada principal) --
+                _context.save();
+                _context.translate(0, -_sharedDispY);
+                stage.items.forEach(function (item) {
+                    if (!item.noViewport) {
                         var _iHalf = (item.height || 20);
                         var _iCanvasY = item.y - _sharedDispY;
-
-                        // Draw principal: solo si el item solapa con [0, height]
                         if (_iCanvasY + _iHalf >= 0 && _iCanvasY - _iHalf <= _.height) {
                             var __item_draw_t0 = Date.now();
                             item.draw(_context);
                             perfAdd && perfAdd('item.draw', Date.now() - __item_draw_t0);
                         }
+                    }
+                });
+                _context.restore();
 
-                        // PSG: wrap-around para items (bottom) con culling
-                        if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
-                            var _iWrapBotY = _iCanvasY + _sharedMapH;
-                            if (_iWrapBotY + _iHalf >= 0 && _iWrapBotY - _iHalf <= _.height) {
-                                _context.save();
-                                _context.translate(0, _sharedMapH);
+                // -- 3b: wrap bottom (UN solo translate para todos) --
+                if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
+                    _context.save();
+                    _context.translate(0, _sharedMapH - _sharedDispY);
+                    stage.items.forEach(function (item) {
+                        if (!item.noViewport) {
+                            var _iHalf = (item.height || 20);
+                            var _iCanvasY = item.y + _sharedMapH - _sharedDispY;
+                            if (_iCanvasY + _iHalf >= 0 && _iCanvasY - _iHalf <= _.height) {
                                 item.draw(_context);
-                                _context.restore();
                             }
                         }
-                        // PSG: wrap-around para items (top) con culling
-                        if (_sharedMapH > 0 && _sharedDispY < _.height) {
-                            var _iWrapTopY = _iCanvasY - _sharedMapH;
-                            if (_iWrapTopY + _iHalf >= 0 && _iWrapTopY - _iHalf <= _.height) {
-                                _context.save();
-                                _context.translate(0, -_sharedMapH);
+                    });
+                    _context.restore();
+                }
+
+                // -- 3c: wrap top (UN solo translate para todos) --
+                if (_sharedMapH > 0 && _sharedDispY < _.height) {
+                    _context.save();
+                    _context.translate(0, -_sharedMapH - _sharedDispY);
+                    stage.items.forEach(function (item) {
+                        if (!item.noViewport) {
+                            var _iHalf = (item.height || 20);
+                            var _iCanvasY = item.y - _sharedMapH - _sharedDispY;
+                            if (_iCanvasY + _iHalf >= 0 && _iCanvasY - _iHalf <= _.height) {
                                 item.draw(_context);
-                                _context.restore();
                             }
                         }
-                        _context.restore();
-                    } else {
+                    });
+                    _context.restore();
+                }
+
+                // -- 3d: HUD items (noViewport, sin translate) --
+                stage.items.forEach(function (item) {
+                    if (item.noViewport) {
                         var __item_draw_t0 = Date.now();
                         item.draw(_context);
                         perfAdd && perfAdd('item.draw', Date.now() - __item_draw_t0);
