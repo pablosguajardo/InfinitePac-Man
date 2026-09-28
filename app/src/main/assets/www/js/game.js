@@ -393,7 +393,7 @@ function Game(id, params) {
             // Ejecutar múltiples pasos de lógica si el dispositivo está atrasado,
             // o ninguno si está al día. Limitamos el número de pasos por frame
             // para evitar bucles infinitos en dispositivos extremadamente lentos.
-            var maxSteps = 10;
+            var maxSteps = 8;
             var steps = 0;
             while (accumulator >= STEP && steps < maxSteps) {
                 // === PASO DE LÓGICA (fixed tick) ===
