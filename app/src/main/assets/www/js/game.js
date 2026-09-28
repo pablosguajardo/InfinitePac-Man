@@ -466,6 +466,27 @@ function Game(id, params) {
                         } catch (e) { /* noop */ }
                         map.draw(_context);
                         perfAdd && perfAdd('map.draw', Date.now() - __map_draw_t0);
+
+                        // PSG: siempre dibujar copia inferior (wrap bottom→top)
+                        if (_sharedMapH > 0 && _sharedDispY + _.height > _sharedMapH) {
+                            _context.save();
+                            _context.translate(0, _sharedMapH);
+                            try {
+                                window.GAME_DEBUG ?? console.log('MAP_CALL BOTTOM_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
+                            } catch (e) { /* noop */ }
+                            map.draw(_context);
+                            _context.restore();
+                        }
+                       /* // PSG: siempre dibujar copia superior (wrap top→bottom)
+                        if (_sharedMapH > 0 && _sharedDispY < _.height) {
+                            _context.save();
+                            _context.translate(0, -_sharedMapH);
+                            try {
+                                window.GAME_DEBUG ?? console.log('MAP_CALL TOP_WRAP', { mapId: map._id, hasTiles: !!map._tiles });
+                            } catch (e) { /* noop * / }
+                            map.draw(_context);
+                            _context.restore();
+                        }*/
                         _context.restore();
                     }
                 });
