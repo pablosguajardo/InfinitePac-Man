@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Test Ghost Sprite</title>
+<style>
+  body { background: #111; color: #fff; font-family: monospace; padding: 20px; }
+  canvas { border: 1px solid #444; display: block; margin: 10px 0; image-rendering: pixelated; }
+  h2 { color: #aaa; }
+</style>
+</head>
+<body>
+<h2>Ghost Sprite (ghost.png) — 96×192 px, 32×32 por frame</h2>
+<p>Cols: 0=bandera abajo | 1=bandera arriba | 2=comido (sobre)<br>
+   Rows: 0=rojo | 1=naranja | 2=cyan | 3=rosa | 4=asustado azul | 5=asustado blanco</p>
+
+<canvas id="c" width="96" height="192"></canvas>
+<p>Escala ×4:</p>
+<canvas id="c2" width="384" height="768"></canvas>
+
+<script>
+var img = new Image();
+img.onload = function() {
+  // original
+  var ctx = document.getElementById('c').getContext('2d');
+  ctx.drawImage(img, 0, 0);
+
+  // escala x4
+  var ctx2 = document.getElementById('c2').getContext('2d');
+  ctx2.imageSmoothingEnabled = false;
+  ctx2.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width*4, img.height*4);
+
+  document.title = 'Ghost OK ' + img.width + 'x' + img.height;
+};
+img.onerror = function() { document.body.innerHTML += '<p style="color:red">ERROR cargando ghost.png</p>'; };
+img.src = '../app/src/main/assets/www/img/ghost.png';
+</script>
+</body>
+</html>
