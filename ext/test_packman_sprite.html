@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Test Pack-Man Sprite</title>
+<style>
+  body { background: #111; color: #fff; font-family: monospace; padding: 20px; }
+  canvas { border: 1px solid #444; display: block; margin: 10px 0; image-rendering: pixelated; }
+  h2 { color: #aaa; }
+  .grid { display: flex; gap: 20px; flex-wrap: wrap; }
+  .cell { text-align: center; }
+  .label { color: #888; font-size: 11px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<h2>Pack-Man Sprite (packman.png) — 96x128 px, 32x32 por frame</h2>
+<p>Cols: 0=cerrado | 1=medio | 2=abierto<br>
+   Rows: 0=derecha | 1=abajo | 2=izquierda | 3=arriba</p>
+
+<h3>Sprite completo (original):</h3>
+<canvas id="c" width="96" height="128"></canvas>
+
+<h3>Escala x4:</h3>
+<canvas id="c2" width="384" height="512"></canvas>
+
+<h3>Frames individuales (x6):</h3>
+<div class="grid" id="frames"></div>
+
+<h3>Animacion (direccion derecha):</h3>
+<canvas id="anim" width="192" height="192"></canvas>
+<p id="animInfo" style="color:#888"></p>
+
+<script>
+var img = new Image();
+img.onload = function() {
+  var FW = 32, FH = 32;
+
+  var ctx = document.getElementById('c').getContext('2d');
+  ctx.drawImage(img, 0, 0);
+
+  var ctx2 = document.getElementById('c2').getContext('2d');
+  ctx2.imageSmoothingEnabled = false;
+  ctx2.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width*4, img.height*4);
+
+  var dirs = ['derecha','abajo','izquierda','arriba'];
+  var mouths = ['cerrado','medio','abierto'];
+  var grid = document.getElementById('frames');
+  for (var row = 0; row < 4; row++) {
+    for (var col = 0; col < 3; col++) {
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      var c = document.createElement('canvas');
+      c.width = 192; c.height = 192;
+      c.style.width = '96px'; c.style.height = '96px';
+      var cx = c.getContext('2d');
+      cx.imageSmoothingEnabled = false;
+      cx.drawImage(img, col*FW, row*FH, FW, FH, 0, 0, 192, 192);
+      var lbl = document.createElement('div');
+      lbl.className = 'label';
+      lbl.textContent = dirs[row] + ' / ' + mouths[col];
+      cell.appendChild(c);
+      cell.appendChild(lbl);
+      grid.appendChild(cell);
+    }
+  }
+
+  var animCtx = document.getElementById('anim').getContext('2d');
+  animCtx.imageSmoothingEnabled = false;
+  var frame = 0;
+  var mouthSeq = [0, 1, 2, 1];
+  var info = document.getElementById('animInfo');
+  setInterval(function() {
+    animCtx.clearRect(0, 0, 192, 192);
+    animCtx.fillStyle = '#111';
+    animCtx.fillRect(0, 0, 192, 192);
+    var col = mouthSeq[frame % mouthSeq.length];
+    animCtx.drawImage(img, col*FW, 0, FW, FH, 0, 0, 192, 192);
+    info.textContent = 'frame: ' + col + ' (boca: ' + mouths[col] + ')';
+    frame++;
+  }, 150);
+
+  document.title = 'Pack-Man OK ' + img.width + 'x' + img.height;
+};
+img.onerror = function() {
+  document.body.innerHTML += '<p style="color:red">ERROR cargando packman.png</p>';
+};
+img.src = '../app/src/main/assets/www/img/packman.png';
+</script>
+</body>
+</html>
