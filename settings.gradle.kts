@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Infinite Pac-Man"
+rootProject.name = "Infinite Pack-Man"
 include(":app")
  
